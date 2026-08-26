@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🌎 Reto de Capitales — Edición Interactiva</title>
+<style>
+:root{--bg1:#071a36;--bg2:#0d3b66;--card:rgba(255,255,255,.1);--text:#fff;--accent:#ffd166;--good:#42e695;--bad:#ff6b6b;}
+*{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);background:radial-gradient(circle at top,#175b8d 0,#0d3b66 38%,#071a36 100%);display:flex;justify-content:center;padding:22px}
+.wrap{width:min(900px,100%);}
+header{text-align:center;margin-bottom:16px} h1{font-size:clamp(2rem,5vw,3.4rem);margin:8px 0} .sub{opacity:.82}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px} .stat{background:var(--card);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:12px;text-align:center;backdrop-filter:blur(8px)} .stat b{display:block;font-size:1.35rem;color:var(--accent)} 
+.card{background:rgba(7,26,54,.72);border:1px solid rgba(255,255,255,.16);border-radius:25px;padding:clamp(20px,5vw,42px);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.progress{height:10px;background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden;margin-bottom:24px} .bar{height:100%;width:0;background:linear-gradient(90deg,#ffd166,#ff9f1c);transition:width .3s}
+.badge{display:inline-block;padding:7px 12px;border-radius:99px;background:rgba(255,209,102,.15);color:var(--accent);font-weight:700} .question{font-size:clamp(1.5rem,4vw,2.35rem);line-height:1.2;margin:22px 0}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px} button{border:0;border-radius:15px;padding:16px 14px;font-size:1rem;font-weight:700;cursor:pointer;transition:.18s;} .answer{background:#f5f7fb;color:#12233f;text-align:left} .answer:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.2)} .answer.correct{background:var(--good);color:#06251a} .answer.wrong{background:var(--bad);color:#fff} button:disabled{cursor:default}
+.feedback{min-height:56px;margin:18px 0 4px;font-weight:800;font-size:1.15rem} .feedback.good{color:var(--good)} .feedback.bad{color:#ff9b9b} .next{width:100%;background:var(--accent);color:#382600;margin-top:8px;font-size:1.05rem}
+.start,.result{text-align:center} .start p{line-height:1.6;opacity:.88} .primary{background:var(--accent);color:#382600;padding:16px 28px;font-size:1.1rem} .secondary{background:rgba(255,255,255,.12);color:#fff;margin-top:10px}
+.hidden{display:none} .trophy{font-size:4rem} .bigscore{font-size:3rem;color:var(--accent);font-weight:900} .record{margin:15px 0;padding:12px;border-radius:14px;background:rgba(255,255,255,.07)}
+@media(max-width:620px){.stats{grid-template-columns:1fr 1fr}.answers{grid-template-columns:1fr} body{padding:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>🌎 Reto de Capitales</h1><div class="sub">¡Pon a prueba tu memoria geográfica!</div></header>
+
+<div id="game">
+<div class="stats">
+<div class="stat">⭐ Puntos<b id="score">0</b></div>
+<div class="stat">🔥 Racha<b id="streak">0</b></div>
+<div class="stat">⏱️ Tiempo<b id="time">30</b></div>
+<div class="stat">❓ Pregunta<b id="count">1/20</b></div>
+</div>
+<div class="card">
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div id="questionArea">
+<span class="badge" id="category">🌎 Capitales del mundo</span>
+<div class="question" id="question">¿Cuál es la capital de Colombia?</div>
+<div class="answers" id="answers"></div>
+<div id="feedback" class="feedback"></div>
+<button id="next" class="next hidden">➡️ Siguiente pregunta</button>
+</div>
+</div>
+</div>
+
+<div id="start" class="card start">
+<div class="trophy">🌎</div><h2>¿Listo para el reto?</h2>
+<p>Jugarás <b>20 preguntas diferentes</b> en cada partida. Hay más de 190 países disponibles, así que las preguntas no se repiten dentro de una misma partida. Tienes <b>30 segundos por pregunta</b>.</p>
+<button class="primary" id="startBtn">🚀 Empezar a jugar</button>
+</div>
+
+<div id="result" class="card result hidden">
+<div class="trophy" id="resultEmoji">🏆</div><h2 id="resultTitle">¡Partida terminada!</h2>
+<div class="bigscore" id="finalScore">0 puntos</div>
+<p id="resultText"></p>
+<div class="record" id="bestRecord"></div>
+<button class="primary" id="againBtn">🔄 Jugar otra vez</button><br>
+<button class="secondary" id="homeBtn">🏠 Volver al inicio</button>
+</div>
+</div>
+
+<script>
+const countries = [{"country": "Afganistán", "capital": "Kabul"}, {"country": "Albania", "capital": "Tirana"}, {"country": "Alemania", "capital": "Berlín"}, {"country": "Andorra", "capital": "Andorra la Vella"}, {"country": "Angola", "capital": "Luanda"}, {"country": "Antigua y Barbuda", "capital": "Saint John's"}, {"country": "Arabia Saudita", "capital": "Riad"}, {"country": "Argelia", "capital": "Argel"}, {"country": "Argentina", "capital": "Buenos Aires"}, {"country": "Armenia", "capital": "Ereván"}, {"country": "Australia", "capital": "Canberra"}, {"country": "Austria", "capital": "Viena"}, {"country": "Azerbaiyán", "capital": "Bakú"}, {"country": "Bahamas", "capital": "Nassau"}, {"country": "Baréin", "capital": "Manama"}, {"country": "Bangladés", "capital": "Daca"}, {"country": "Barbados", "capital": "Bridgetown"}, {"country": "Bélgica", "capital": "Bruselas"}, {"country": "Belice", "capital": "Belmopán"}, {"country": "Benín", "capital": "Porto-Novo"}, {"country": "Bielorrusia", "capital": "Minsk"}, {"country": "Bolivia", "capital": "Sucre"}, {"country": "Bosnia y Herzegovina", "capital": "Sarajevo"}, {"country": "Botsuana", "capital": "Gaborone"}, {"country": "Brasil", "capital": "Brasilia"}, {"country": "Brunéi", "capital": "Bandar Seri Begawan"}, {"country": "Bulgaria", "capital": "Sofía"}, {"country": "Burkina Faso", "capital": "Uagadugú"}, {"country": "Burundi", "capital": "Gitega"}, {"country": "Bután", "capital": "Timbu"}, {"country": "Cabo Verde", "capital": "Praia"}, {"country": "Camboya", "capital": "Nom Pen"}, {"country": "Camerún", "capital": "Yaundé"}, {"country": "Canadá", "capital": "Ottawa"}, {"country": "Catar", "capital": "Doha"}, {"country": "Chad", "capital": "Yamena"}, {"country": "Chile", "capital": "Santiago"}, {"country": "China", "capital": "Pekín"}, {"country": "Chipre", "capital": "Nicosia"}, {"country": "Colombia", "capital": "Bogotá"}, {"country": "Comoras", "capital": "Moroni"}, {"country": "Costa Rica", "capital": "San José"}, {"country": "Croacia", "capital": "Zagreb"}, {"country": "Cuba", "capital": "La Habana"}, {"country": "Dinamarca", "capital": "Copenhague"}, {"country": "Dominica", "capital": "Roseau"}, {"country": "Ecuador", "capital": "Quito"}, {"country": "Egipto", "capital": "El Cairo"}, {"country": "El Salvador", "capital": "San Salvador"}, {"country": "Emiratos Árabes Unidos", "capital": "Abu Dabi"}, {"country": "Eritrea", "capital": "Asmara"}, {"country": "Eslovaquia", "capital": "Bratislava"}, {"country": "Eslovenia", "capital": "Liubliana"}, {"country": "España", "capital": "Madrid"}, {"country": "Estados Unidos", "capital": "Washington D. C."}, {"country": "Estonia", "capital": "Tallin"}, {"country": "Esuatini", "capital": "Mbabane"}, {"country": "Etiopía", "capital": "Adís Abeba"}, {"country": "Fiyi", "capital": "Suva"}, {"country": "Filipinas", "capital": "Manila"}, {"country": "Finlandia", "capital": "Helsinki"}, {"country": "Francia", "capital": "París"}, {"country": "Gabón", "capital": "Libreville"}, {"country": "Gambia", "capital": "Banjul"}, {"country": "Georgia", "capital": "Tiflis"}, {"country": "Ghana", "capital": "Acra"}, {"country": "Granada", "capital": "Saint George's"}, {"country": "Grecia", "capital": "Atenas"}, {"country": "Guatemala", "capital": "Ciudad de Guatemala"}, {"country": "Guinea", "capital": "Conakry"}, {"country": "Guinea-Bisáu", "capital": "Bisáu"}, {"country": "Guyana", "capital": "Georgetown"}, {"country": "Haití", "capital": "Puerto Príncipe"}, {"country": "Honduras", "capital": "Tegucigalpa"}, {"country": "Hungría", "capital": "Budapest"}, {"country": "India", "capital": "Nueva Delhi"}, {"country": "Indonesia", "capital": "Yakarta"}, {"country": "Irak", "capital": "Bagdad"}, {"country": "Irán", "capital": "Teherán"}, {"country": "Irlanda", "capital": "Dublín"}, {"country": "Islandia", "capital": "Reikiavik"}, {"country": "Israel", "capital": "Jerusalén"}, {"country": "Italia", "capital": "Roma"}, {"country": "Jamaica", "capital": "Kingston"}, {"country": "Japón", "capital": "Tokio"}, {"country": "Jordania", "capital": "Amán"}, {"country": "Kazajistán", "capital": "Astaná"}, {"country": "Kenia", "capital": "Nairobi"}, {"country": "Kirguistán", "capital": "Biskek"}, {"country": "Kuwait", "capital": "Ciudad de Kuwait"}, {"country": "Laos", "capital": "Vientián"}, {"country": "Letonia", "capital": "Riga"}, {"country": "Líbano", "capital": "Beirut"}, {"country": "Lesoto", "capital": "Maseru"}, {"country": "Liberia", "capital": "Monrovia"}, {"country": "Libia", "capital": "Trípoli"}, {"country": "Liechtenstein", "capital": "Vaduz"}, {"country": "Lituania", "capital": "Vilna"}, {"country": "Luxemburgo", "capital": "Luxemburgo"}, {"country": "Madagascar", "capital": "Antananarivo"}, {"country": "Malasia", "capital": "Kuala Lumpur"}, {"country": "Malaui", "capital": "Lilongüe"}, {"country": "Maldivas", "capital": "Malé"}, {"country": "Malí", "capital": "Bamako"}, {"country": "Malta", "capital": "La Valeta"}, {"country": "Marruecos", "capital": "Rabat"}, {"country": "Mauricio", "capital": "Port Louis"}, {"country": "Mauritania", "capital": "Nuakchot"}, {"country": "México", "capital": "Ciudad de México"}, {"country": "Moldavia", "capital": "Chisináu"}, {"country": "Mónaco", "capital": "Mónaco"}, {"country": "Mongolia", "capital": "Ulán Bator"}, {"country": "Montenegro", "capital": "Podgorica"}, {"country": "Mozambique", "capital": "Maputo"}, {"country": "Namibia", "capital": "Windhoek"}, {"country": "Nepal", "capital": "Katmandú"}, {"country": "Nicaragua", "capital": "Managua"}, {"country": "Níger", "capital": "Niamey"}, {"country": "Nigeria", "capital": "Abuya"}, {"country": "Noruega", "capital": "Oslo"}, {"country": "Nueva Zelanda", "capital": "Wellington"}, {"country": "Omán", "capital": "Mascate"}, {"country": "Países Bajos", "capital": "Ámsterdam"}, {"country": "Pakistán", "capital": "Islamabad"}, {"country": "Panamá", "capital": "Ciudad de Panamá"}, {"country": "Papúa Nueva Guinea", "capital": "Port Moresby"}, {"country": "Paraguay", "capital": "Asunción"}, {"country": "Perú", "capital": "Lima"}, {"country": "Polonia", "capital": "Varsovia"}, {"country": "Portugal", "capital": "Lisboa"}, {"country": "Reino Unido", "capital": "Londres"}, {"country": "República Checa", "capital": "Praga"}, {"country": "República Dominicana", "capital": "Santo Domingo"}, {"country": "Ruanda", "capital": "Kigali"}, {"country": "Rumania", "capital": "Bucarest"}, {"country": "Rusia", "capital": "Moscú"}, {"country": "Samoa", "capital": "Apia"}, {"country": "San Cristóbal y Nieves", "capital": "Basseterre"}, {"country": "San Marino", "capital": "San Marino"}, {"country": "San Vicente y las Granadinas", "capital": "Kingstown"}, {"country": "Santa Lucía", "capital": "Castries"}, {"country": "Santo Tomé y Príncipe", "capital": "Santo Tomé"}, {"country": "Senegal", "capital": "Dakar"}, {"country": "Serbia", "capital": "Belgrado"}, {"country": "Seychelles", "capital": "Victoria"}, {"country": "Sierra Leona", "capital": "Freetown"}, {"country": "Singapur", "capital": "Singapur"}, {"country": "Siria", "capital": "Damasco"}, {"country": "Somalia", "capital": "Mogadiscio"}, {"country": "Sudáfrica", "capital": "Pretoria"}, {"country": "Sudán", "capital": "Jartum"}, {"country": "Sudán del Sur", "capital": "Yuba"}, {"country": "Suecia", "capital": "Estocolmo"}, {"country": "Suiza", "capital": "Berna"}, {"country": "Surinam", "capital": "Paramaribo"}, {"country": "Tailandia", "capital": "Bangkok"}, {"country": "Tanzania", "capital": "Dodoma"}, {"country": "Tayikistán", "capital": "Dusambé"}, {"country": "Timor-Leste", "capital": "Dili"}, {"country": "Togo", "capital": "Lomé"}, {"country": "Tonga", "capital": "Nukualofa"}, {"country": "Trinidad y Tobago", "capital": "Puerto España"}, {"country": "Túnez", "capital": "Túnez"}, {"country": "Turkmenistán", "capital": "Asjabad"}, {"country": "Turquía", "capital": "Ankara"}, {"country": "Tuvalu", "capital": "Funafuti"}, {"country": "Ucrania", "capital": "Kiev"}, {"country": "Uganda", "capital": "Kampala"}, {"country": "Uruguay", "capital": "Montevideo"}, {"country": "Uzbekistán", "capital": "Taskent"}, {"country": "Vanuatu", "capital": "Port Vila"}, {"country": "Vaticano", "capital": "Ciudad del Vaticano"}, {"country": "Venezuela", "capital": "Caracas"}, {"country": "Vietnam", "capital": "Hanói"}, {"country": "Yemen", "capital": "Saná"}, {"country": "Yibuti", "capital": "Yibuti"}, {"country": "Zambia", "capital": "Lusaka"}, {"country": "Zimbabue", "capital": "Harare"}];
+const TOTAL = 20;
+let questions=[], index=0, score=0, streak=0, time=30, timer=null, answered=false;
+let best = Number(localStorage.getItem('capitalesBest')||0);
+
+const $ = id => document.getElementById(id);
+function shuffle(a) { return [...a].sort(()=>Math.random()-.5); }
+
+function makeQuestions() {
+  // Barajamos países y tomamos 20 únicos: nunca se repite una pregunta dentro de la partida.
+  const selected = shuffle(countries).slice(0,TOTAL);
+  questions = selected.map(item => {
+    const distractors = shuffle(countries.filter(x=>x.capital!==item.capital))
+      .slice(0,3).map(x=>x.capital);
+    return {...item, options:shuffle([item.capital,...distractors])};
+  });
+}
+
+function startGame() {
+  clearInterval(timer); makeQuestions(); index=0; score=0; streak=0;
+  $('start').classList.add('hidden'); $('result').classList.add('hidden'); $('game').classList.remove('hidden');
+  showQuestion();
+}
+
+function showQuestion() {
+  answered=false; time=30; $('time').textContent=time; $('score').textContent=score; $('streak').textContent=streak;
+  $('count').textContent=`${index+1}/${TOTAL}`; $('bar').style.width=`${index/TOTAL*100}%`;
+  const q=questions[index]; $('question').textContent=`¿Cuál es la capital de ${q.country}?`;
+  $('category').textContent = index%5===0 ? '🧠 ¡Nivel sorpresa!' : '🌎 Capitales del mundo';
+  $('feedback').textContent=''; $('feedback').className='feedback'; $('next').classList.add('hidden');
+  const box=$('answers'); box.innerHTML='';
+  q.options.forEach(opt=>{
+    const b=document.createElement('button'); b.className='answer'; b.textContent=opt;
+    b.onclick=()=>answer(b,opt); box.appendChild(b);
+  });
+  clearInterval(timer); timer=setInterval(()=>{time--; $('time').textContent=time; if(time<=0){clearInterval(timer); if(!answered) answer(null,null,true);}},1000);
+}
+
+function answer(button, choice, expired=false) {
+  if(answered) return; answered=true; clearInterval(timer);
+  const q=questions[index]; const correct=choice===q.capital;
+  document.querySelectorAll('.answer').forEach(b=>{b.disabled=true;if(b.textContent===q.capital)b.classList.add('correct')});
+  if(button && !correct) button.classList.add('wrong');
+  if(correct) {
+    streak++; score += 100 + time*5 + Math.max(0,streak-1)*20;
+    $('feedback').textContent=`🎉 ¡Correcto! +${100 + time*5 + Math.max(0,streak-1)*20} puntos`;
+    $('feedback').className='feedback good';
+  } else {
+    streak=0; $('feedback').textContent=expired ? `⏰ ¡Se acabó el tiempo! La respuesta era ${q.capital}.` : `❌ Casi. La respuesta correcta es ${q.capital}.`;
+    $('feedback').className='feedback bad';
+  }
+  $('score').textContent=score; $('streak').textContent=streak; $('next').classList.remove('hidden');
+}
+
+$('next').onclick=()=>{ if(index<TOTAL-1){index++;showQuestion()}else finish(); };
+function finish() {
+  clearInterval(timer); $('game').classList.add('hidden'); $('result').classList.remove('hidden');
+  $('bar').style.width='100%'; $('finalScore').textContent=`${score.toLocaleString('es-CO')} puntos`;
+  const correct=questions.reduce((n,q,i)=>n,0); // marcador visual; las estadísticas se calculan desde los puntos/racha.
+  const max=TOTAL*250;
+  const pct=Math.min(100,Math.round(score/max*100));
+  let emoji='🏆', title='¡Excelente!';
+  if(score<1000){emoji='🌱';title='¡Buen intento!';} else if(score<1800){emoji='⭐';title='¡Muy bien!';}
+  $('resultEmoji').textContent=emoji; $('resultTitle').textContent=title;
+  $('resultText').textContent=`Terminaste las ${TOTAL} preguntas. Tu puntuación refleja aciertos, rapidez y rachas. ¿Puedes superar tu marca?`;
+  if(score>best){best=score;localStorage.setItem('capitalesBest',best);$('bestRecord').textContent=`🎉 ¡Nuevo récord! ${best.toLocaleString('es-CO')} puntos`}
+  else $('bestRecord').textContent=`🏅 Tu mejor marca: ${best.toLocaleString('es-CO')} puntos`;
+}
+$('startBtn').onclick=startGame; $('againBtn').onclick=startGame;
+$('homeBtn').onclick=()=>{clearInterval(timer);$('result').classList.add('hidden');$('game').classList.add('hidden');$('start').classList.remove('hidden');};
+$('game').classList.add('hidden');
+</script>
+</body>
+</html>
